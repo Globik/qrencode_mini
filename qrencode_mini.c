@@ -385,27 +385,40 @@ void Complete(napi_env env,napi_status status, void* data){
 if(data==NULL)return;
 carrier* c=(carrier*)data;
 if(status !=napi_ok){
-napi_throw_type_error(env,NULL,"execute callback failed.");
+//napi_throw_type_error(env,NULL,"execute callback failed.");
+	free(c->_output);
+	free(c);
 return;}
 //napi_handle_scope scope;
 	napi_value argv[2];
 	//status=napi_open_handle_scope(env,&scope);
 	napi_get_null(env,&argv[0]);
 status=napi_create_buffer_copy(env,c->_out_bufsize,c->_output,NULL,&argv[1]);	
-if(status !=napi_ok){napi_throw_type_error(env,NULL,"Copy buffer failed. Provide me a buffer.");return;}
+//if(status !=napi_ok){napi_throw_type_error(env,NULL,"Copy buffer failed. Provide me a buffer.");return;}
 	napi_value callback;
-	napi_get_reference_value(env,c->_callback,&callback);
+	status=napi_get_reference_value(env,c->_callback,&callback);
 	napi_value global;
 	status=napi_get_global(env,&global);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"Get global failed.");return;}
+	//if(status !=napi_ok){napi_throw_type_error(env,NULL,"Get global failed.");return;}
 	napi_value result;
 	status=napi_call_function(env,global,callback,2,argv,&result);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"call_function failed.");return;}
+	//if(status !=napi_ok){napi_throw_type_error(env,NULL,"call_function failed.");return;}
 	status=napi_delete_reference(env,c->_callback);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"delete reference failed.");return;}
+	//if(status !=napi_ok){napi_throw_type_error(env,NULL,"delete reference failed.");return;}
 	status=napi_delete_async_work(env,c->_request);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"delete_async_work failed.");return;}
+	//if(status !=napi_ok){napi_throw_type_error(env,NULL,"delete_async_work failed.");return;}
 	//status=napi_close_handle_scope(env,scope);
+	if(status !=napi_ok){
+		free(c->_output);
+		free(c);
+	napi_value argc[2];
+	status=napi_create_string_utf8(env,"blabla1.",NAPI_AUTO_LENGTH,&argc[0]);
+	if(status !=napi_ok){return;}
+	//napi_value argi[2];
+	//napi_value cbi=argv[2];
+	status=napi_call_function(env,global,argv[1],2, argc,NULL);
+	//?	
+	}
 	free(c->_output);
 	free(c);
 }
@@ -420,43 +433,81 @@ if(margin <= 0){if(micro){margin=2;}else{margin=4;}}
 	napi_value resource_name;
 	void* data;
 	carrier* c=(carrier*)malloc(sizeof(carrier));
-	if(c==NULL){napi_throw_type_error(env,NULL,"malloc failed.");return NULL;}
+	if(c==NULL){
+		//napi_throw_type_error(env,NULL,"malloc failed.");return NULL;
+	return NULL;
+	}
 	
 	status=napi_get_cb_info(env,info,&argc,argv,&_this,&data);
 	
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"Get global failed.");return NULL;}
+	if(status !=napi_ok){
+		//napi_throw_type_error(env,NULL,"Get global failed.");return NULL;
+		goto brr;
+	}
 	c->_output=NULL;
 	bool isbuf;
 	//napi_valuetype isbuf;
 	status=napi_is_buffer(env,argv[0],&isbuf);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"typeof failed.");return NULL;}
+	if(status !=napi_ok){
+		//napi_throw_type_error(env,NULL,"typeof failed.");return NULL;
+	goto brr;
+	}
 	if(isbuf == 0){
 		//fprintf(stderr,"BUFFER IS NOT\n");
 	napi_value global;
 	status=napi_get_global(env,&global);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"Get global failed.");return NULL;}
+	if(status !=napi_ok){
+		//napi_throw_type_error(env,NULL,"Get global failed.");return NULL;
+	goto brr;
+	}
 	//napi_throw_type_error(env,NULL,"Wrong type of argument! Expects a buffer.");
 	//napi_value result3;
 	napi_value argc[2];
 	status=napi_create_string_utf8(env,"Wrong type of argument! Expects a buffer.",NAPI_AUTO_LENGTH,&argc[0]);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_string failed.");return NULL;}
+	if(status !=napi_ok){
+		//napi_throw_type_error(env,NULL,"create_string failed.");return NULL;
+	goto brr;
+	}
 	//napi_value argi[2];
 	napi_value cbi=argv[2];
-	status=napi_call_function(env,global,cbi,2, argc,/*&result3*/NULL);
+	status=napi_call_function(env,global,cbi,1, argc,/*&result3*/NULL);
+	if(status !=napi_ok) goto brr;
 //napi_call_function(env,global,third_argument of javascript aka cb function,args ...(err,result)=>{},err[0] or result[1],can be NULL );
-	return NULL;
+	free(c);
+		return NULL;
 	}
 status=napi_get_buffer_info(env, argv[0],(void**)(&c->_input),&c->_bufferlength);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"Get buffer_info failed.");return NULL;}
+	if(status !=napi_ok){
+		//napi_throw_type_error(env,NULL,"Get buffer_info failed.");return NULL;
+	goto brr;
+	}
 	status=napi_create_reference(env,argv[2],1,&c->_callback);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_reference failed.");return NULL;}
+	if(status !=napi_ok){
+	//napi_throw_type_error(env,NULL,"create_reference failed.");return NULL;
+	
+	}
 	status=napi_create_string_utf8(env,"TestResource",NAPI_AUTO_LENGTH,&resource_name);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create string failed.");return NULL;}
+	if(status !=napi_ok){
+		//napi_throw_type_error(env,NULL,"create string failed.");return NULL;
+	goto brr;
+	}
 	status=napi_create_async_work(env,argv[1],resource_name,Execute,Complete,c,&c->_request);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_async_work failed.");return NULL;}
+	if(status !=napi_ok){
+		//napi_throw_type_error(env,NULL,"create_async_work failed.");return NULL;
+	goto brr;
+	}
 	status=napi_queue_async_work(env,c->_request);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"queue_async_work failed.");return NULL;}
+	if(status !=napi_ok){
+	//napi_throw_type_error(env,NULL,"queue_async_work failed.");return NULL;
+	goto brr;
+	}
 	return NULL;
+	if(0){
+	brr:
+	fprintf(stderr,"Some error with napi_status in qrencode method\n");
+	free(c);
+	return NULL;
+	}
 	}
 
 napi_value setOptions(napi_env env,napi_callback_info info){
@@ -479,7 +530,8 @@ size_t argc=1;
 	uint32_t lind;
 	napi_value props_names;
 	status=napi_get_property_names(env,obj,&props_names);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"get_named_property failed.");return NULL;}
+	if(status !=napi_ok){
+	napi_throw_type_error(env,NULL,"get_named_property failed.");return NULL;}
 	lind=objectLength(env,props_names);
 	if(lind==0){
 	napi_throw_type_error(env,NULL,"A provided object must not to be empty!");
@@ -599,51 +651,43 @@ size_t argc=1;
 	return NULL;
 		}
 	}
+	
 	napi_value qr_version,qr_margin,qr_level, qr_size,qr_versi,qr_micro,qr_background_color,qr_foreground_color,qr_full_version;
 	napi_value object;
+
+const char*props[]={"full_version","copyright","margin","level","dot_size","micro","version","background_color","foreground_color",NULL};
+
 	//background_color:'76eec6',foreground_color:'ff0000'
 	status=napi_create_string_utf8(env,"Copyright (C) 2006-2017 Kentaro Fukuchi.",NAPI_AUTO_LENGTH,&qr_version);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_string failed.");return NULL;}
-	status=napi_create_string_utf8(env,(const char*)coli_b,NAPI_AUTO_LENGTH,&qr_background_color);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_string failed.");return NULL;}
-	status=napi_create_string_utf8(env,(const char*)coli_f,NAPI_AUTO_LENGTH,&qr_foreground_color);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_string failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
+	status=napi_create_string_utf8(env,coli_b,NAPI_AUTO_LENGTH,&qr_background_color);
+	if(status !=napi_ok){return NULL;}
+	status=napi_create_string_utf8(env,coli_f,NAPI_AUTO_LENGTH,&qr_foreground_color);
+	if(status !=napi_ok){return NULL;}
 	status=napi_create_string_utf8(env,QRcode_APIVersionString(),NAPI_AUTO_LENGTH,&qr_full_version);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_string failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
+	//5
 	status=napi_create_int32(env,level,&qr_level);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_int32 failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
 	status=napi_create_int32(env,margin,&qr_margin);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_int32 failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
 	status=napi_create_int32(env,size,&qr_size);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_int32 failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
 	status=napi_create_int32(env,version,&qr_versi);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_int32 failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
 	status=napi_create_int32(env,micro,&qr_micro);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_int32 failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
 	status=napi_create_object(env,&object);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"create_object failed.");return NULL;}
-	status=napi_set_named_property(env,object,"full_version",qr_full_version);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
-	status=napi_set_named_property(env,object,"copyright",qr_version);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
-	status=napi_set_named_property(env,object,"margin",qr_margin);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
-	status=napi_set_named_property(env,object,"level",qr_level);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
+	if(status !=napi_ok){return NULL;}
 	
-	status=napi_set_named_property(env,object,"dot_size",qr_size);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
+napi_value jsvalues[]={qr_full_version,qr_version,qr_margin,qr_level,qr_size,qr_micro,qr_versi,qr_background_color,qr_foreground_color,NULL};
 	
-	status=napi_set_named_property(env,object,"micro",qr_micro);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
-	status=napi_set_named_property(env,object,"version",qr_versi);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
-	
-	status=napi_set_named_property(env,object,"background_color",qr_background_color);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
-	
-	status=napi_set_named_property(env,object,"foreground_color",qr_foreground_color);
-	if(status !=napi_ok){napi_throw_type_error(env,NULL,"set_named_property failed.");return NULL;}
+	size_t mf=0;
+	while(props[mf]){
+	status=napi_set_named_property(env,object,props[mf],jsvalues[mf]);
+	if(status !=napi_ok) {return NULL;}
+	mf++;
+	}
 	return object;
 }
 
@@ -673,7 +717,7 @@ size_t st_size=50;
 napi_status status;
 if(isString(env,js_str)){
 status=napi_get_value_string_utf8(env,js_str,st,st_size,NULL);
-if(status !=napi_ok){napi_throw_type_error(env,NULL,"create string failed.");return NULL;}
+if(status !=napi_ok){return NULL;}
 const char*du=st;
 return du;
 }
@@ -683,7 +727,7 @@ bool isNumber(napi_env env,napi_value nnumber){
 napi_status status;
 napi_valuetype t;
 status=napi_typeof(env,nnumber,&t);
-if(status !=napi_ok){napi_throw_type_error(env,NULL,"typeof failed.");return NULL;}
+if(status !=napi_ok){return NULL;}
 if(t == napi_number) return 1;
 return 0;
 }
@@ -693,24 +737,22 @@ int32_t zfr;
 char foo[100];
 char*f="Expected a number";
 napi_status status;
-if(isNumber(env,nresult)){
-status=napi_get_value_int32(env,nresult,&zfr);
-if(status !=napi_ok){napi_throw_type_error(env,NULL,"get_value_int32 failed.");return 0;}
-return zfr;
-}else{
+if(!isNumber(env,nresult)){
 strcpy(foo,f);
-if(er) {
-strcat(foo,er);
-}
+if(er) {strcat(foo,er);}
 napi_throw_type_error(env,NULL,foo);
+}
+status=napi_get_value_int32(env,nresult,&zfr);
+if(status !=napi_ok){napi_throw_type_error(env,NULL,"hm");}
 return zfr;
-}}
+}
+
 
 bool isString(napi_env env,napi_value str){
 napi_status status;
 napi_valuetype vtype;
 status=napi_typeof(env,str,&vtype);
-if(status !=napi_ok){napi_throw_type_error(env,NULL,"typeof failed.");return NULL;}
+if(status !=napi_ok){return NULL;}
 if(vtype == napi_string) return 1;
 return 0;
 }
@@ -727,6 +769,6 @@ return hasp;
 napi_value getNamedProperty(napi_env env,napi_value obj,const char*s){
 napi_value vresi;napi_status status;
 status=napi_get_named_property(env,obj,s,&vresi);// displays the value of key "suka" to the vresi
-if(status !=napi_ok){napi_throw_type_error(env,NULL,"get_named_property failed.");return NULL;}
+if(status !=napi_ok){return NULL;}
 return vresi;
 }

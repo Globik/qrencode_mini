@@ -4,7 +4,8 @@
   "description": "QR Code Generator for node.js",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": "node test/i.js",
+	  "install":"node-gyp rebuild"
   },
   "engines": {
     "node": ">=9.0.0"
@@ -22,6 +23,7 @@
   ],
   "author": "Globalik Slivov <globalikslivov@gmail.com> (https://github.com/Globik)",
   "license": "MIT",
+"gypfile":true,
   "bugs": {
     "url": "https://github.com/Globik/qrencode_mini/issues"
   },

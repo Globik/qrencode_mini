@@ -5,8 +5,8 @@ const ob={/*background_color:'76eec6',*/foreground_color:'ff0000', level:"q",dot
 // -s dot_size
 // level{high=QR_ECLEVEL_H,q=QR_ECLEVEL_Q,m=QR_ECLEVEL_M,l=QR_ECLEVEL_L} => DEFAULT=L(low)
 const ob2={};
-//let bn=ad.setOptions(ob);
-//console.log('bn: ',bn);
+let bn=ad.setOptions(ob);
+console.log('bn: ',bn);
 // todo: eightbit can be hardcoded, and version?(must be too)
 //micro is optional dot_size, margin are too. Colors also optional. Level? One default and then very specific
 //#76eec6
@@ -16,6 +16,7 @@ const buf=Buffer.from(str);
 ad.qrencode(buf,{type:"nu"},function(err,val){console.log('error: ',err);console.log('valA: ',val.toString());});
 var k=0;
 //dura();
+console.log('\x1b[36m','JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ','\x1b[0m');
 function dura(){
 var t=setInterval(function(){
 	
