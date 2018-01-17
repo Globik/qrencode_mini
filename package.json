@@ -4,7 +4,7 @@
   "description": "QR Code Generator for node.js",
   "main": "index.js",
   "scripts": {
-    "test": "node test/i.js",
+    "test": "node tests/i.js",
 	  "install":"node-gyp rebuild"
   },
   "engines": {
