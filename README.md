@@ -102,8 +102,7 @@ The version for microQR if micro = 1, must be specified to 3 or 4!
 | Iterations | 1 | 5 | 100 |
 | :---------: | :---------: | :---------: | :---------: |
 | qrencode\_mini  | 1.871ms     | 5.181ms     | 5.587ms   |
-| :---------: | :---------: | :---------: | :---------: |
-| qr-node   | 4.940ms     | 41.030ms    | 519.877ms  |
+| [qr-node](https://github.com/xr0master/qr-node)   | 4.940ms     | 41.030ms    | 519.877ms  |
 | :---------: | :---------: | :---------: | :---------: |
 | [qrcode-js](https://github.com/CloudService/qrcode-js)    | 297.948ms   | 1405.711ms  | 9803.455ms |
 
