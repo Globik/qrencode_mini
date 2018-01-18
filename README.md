@@ -1,5 +1,8 @@
 # qrencode_mini
 
+[![NPM version](http://img.shields.io/npm/v/qrencode_mini.svg?style=flat)](https://npmjs.org/package/qrencode_mini) 
+[![NPM Downloads](https://img.shields.io/npm/dm/qrencode_mini.svg?style=flat)](https://npmjs.org/package/qrencode_mini)
+
 
 Node.js addon(N-API) QR-code generator based on [libqrencode](https://github.com/fukuchi/libqrencode) in C - a fast and compact QR Code encoding
 library.
