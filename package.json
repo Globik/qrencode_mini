@@ -17,7 +17,7 @@
     "url": "git+https://github.com/Globik/qrencode_mini.git"
   },
   "keywords": [
-    "qrcode","n-api"
+    "qrcode","n-api","addon"
   ],
   "author": "Globalik Slivov <globalikslivov@gmail.com> (https://github.com/Globik)",
   "license": "MIT",
