@@ -99,11 +99,11 @@ The version for microQR if micro = 1, must be specified to 3 or 4!
 * qrencode_mini is about x3 times faster than [qr-node](https://github.com/xr0master/qr-node)
 * qrencode_mini is about x300 times faster than [qrcode-js](https://github.com/CloudService/qrcode-js)
 
-| Iterations  | 1           | 5           | 100         |
-| :---------: | :---------: | :---------: | :---------: |
-| [qrencode_mini](https://github.com/Globik/qrencode_mini) | 1.871ms   | 5.181ms    | 5.587ms    |
-| :---------: | :---------: | :---------: | :---------: |
-| [qr-node](https://github.com/xrOmaster/qr-node)          | 4.940ms   | 41.030ms   | 519.877ms  |
-| :---------: | :---------: | :---------: | :---------: |
-| [qrcode-js](https://github.com/CloudService/qrcode-js)   | 297.948ms | 1405.711ms | 9803.455ms |
-| :---------: | :---------: | :---------: | :---------: |
+| Iterations                                                | 1           | 5           | 100         |
+| :---------:                                               | :---------: | :---------: | :---------: |
+| [qrencode_mini](https://github.com/Globik/qrencode_mini)  | 1.871ms     | 5.181ms     | 5.587ms     |
+| :---------:                                               | :---------: | :---------: | :---------: |
+| [qr-node](https://github.com/xrOmaster/qr-node)           | 4.940ms     | 41.030ms    | 519.877ms  |
+| :---------:                                               | :---------: | :---------: | :---------: |
+| [qrcode-js](https://github.com/CloudService/qrcode-js)    | 297.948ms   | 1405.711ms  | 9803.455ms |
+
