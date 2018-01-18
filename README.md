@@ -27,8 +27,10 @@ There are only two methods.
 const {setOptions, qrencode} = require('qrencode_mini');
 
 // only for the use at very beginning of a file:
-const b = setOptions({margin:4}); // synchronous, optional(can be skiped), for the options settings which are also optional
-console.log("B: ",b); // outputs an object with version, copyright and setted options or error info.
+const b = setOptions({margin:4}); // synchronous, optional(can be skiped),
+//for the options settings which are also optional
+console.log("B: ",b); 
+// outputs an object with version, copyright and setted options or error info.
 
 // later somewhere in a router after http request:
 let str="bitcoin:1BMXmqU3fZ8PVjPbxgeenEX93YYf74bjeB?amount50&label=John&message=Donation%20for%20project";
@@ -98,6 +100,10 @@ The version for microQR if micro = 1, must be specified to 3 or 4!
 * qrencode_mini is about x300 times faster than [qrcode-js](https://github.com/CloudService/qrcode-js)
 
 | Iterations  | 1     | 5     | 100   |
+| :---: | :---: | :---: | :---: |
 | [qrencode_mini](https://github.com/Globik/qrencode_mini) | 1.871ms   | 5.181ms    | 5.587ms    |
+| :---: | :---: | :---: | :---: |
 | [qr-node](https://github.com/xrOmaster/qr-node)          | 4.940ms   | 41.030ms   | 519.877ms  |
+| :---: | :---: | :---: | :---: |
 | [qrcode-js](https://github.com/CloudService/qrcode-js)   | 297.948ms | 1405.711ms | 9803.455ms |
+| :---: | :---: | :---: | :---: |
