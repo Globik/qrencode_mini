@@ -4,15 +4,13 @@
   "description": "QR Code Generator for node.js",
   "main": "index.js",
   "scripts": {
-    "test": "node tests/i.js",
-	  "install":"node-gyp rebuild"
+  "test": "node tests/i.js",
+  "install":"node-gyp rebuild"
   },
   "engines": {
     "node": ">=9.0.0"
   },
-  "dependencies": {
- 
-  },
+  "dependencies": {},
   "devDepenencies": {},
   "repository": {
     "type": "git",

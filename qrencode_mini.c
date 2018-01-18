@@ -585,17 +585,24 @@ size_t argc=1;
 	napi_value nres3;
 	nres3=getNamedProperty(env, obj, versi);
 	int32_t verson=getZifra(env, nres3, " for version.");
+		if(verson < 0){
+		status=napi_throw_type_error(env,NULL,"Invalid version.");
+			return NULL;
+		}
 	if(micro && verson > MQRSPEC_VERSION_MAX){
-	status=napi_throw_type_error(env,NULL,"Version should be less or equal to %d, MQRSPEC_VERSION_MAX");
+		//fprintf(stderr,"why %d\n",MQRSPEC_VERSION_MAX);
+	status=napi_throw_type_error(env,NULL,"Version should be less or equal to 4");// MQRSPEC_VERSION_MAX;
+		//status=
+			//napi_fatal_error("KUKU",NAPI_AUTO_LENGTH,"DUDU",NAPI_AUTO_LENGTH);
 	return NULL;
 	}else if(!micro && verson > QRSPEC_VERSION_MAX){
-	status=napi_throw_type_error(env,NULL,"Version should be less or equal to qrspec_version_max.");
+	status=napi_throw_type_error(env,NULL,"Version should be less or equal to 4");
 	return NULL;	
 	}
 	version=verson;
 	if(micro){
-	if(version==0){
-	napi_throw_type_error(env,NULL,"Version must be specified to encode a Micro QR Cide symbol.");
+	if(version==0 || version==1 || version==2){
+	napi_throw_type_error(env,NULL,"Version must be specified to encode a Micro QR Code symbol.");
 	return NULL;
 	}
 	}
