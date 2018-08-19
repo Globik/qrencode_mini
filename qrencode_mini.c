@@ -33,12 +33,19 @@
 #include "qrencode.h"
 //#include <unistd.h>
 typedef struct{
+	int version,micro,margin,size;
+	unsigned char fg_color[4];
 	const unsigned char* _input;
+	QRecLevel level;
 	char* _output;
+	size_t mem;
 	size_t  _bufferlength;
 	size_t _out_bufsize;
-    napi_ref _callback;
-	napi_async_work _request;
+
+unsigned char bg_color[4];
+	
+napi_ref _callback;
+napi_async_work _request;
 }carrier;
 
 #define INCHES_PER_METER (100.0/2.54)
@@ -46,15 +53,15 @@ typedef struct{
 static int casesensitive = 1;
 
 static int eightbit = 1;//0; harcoded to yes
-static int version = 0;
-static int size = 3;//dot_size=number
-static int margin = -1;// margin=number
+//static int version = 0;
+//static int size = 3;//dot_size=number
+//static int margin = -1;// margin=number
 static int dpi = 72;
-static int micro = 0;
-static QRecLevel level = QR_ECLEVEL_L;
+//static int micro = 0;
+//static QRecLevel level = QR_ECLEVEL_L;
 static QRencodeMode hint = QR_MODE_8;
-static unsigned char fg_color[4] = {0, 0, 0, 255};
-static unsigned char bg_color[4] = {255, 255, 255, 255};
+//static unsigned char fg_color[4] = {0, 0, 0, 255};
+//static unsigned char bg_color[4] = {255, 255, 255, 255};
 
 enum imageType {
 	PNG_TYPE,
@@ -76,26 +83,29 @@ static bool hasNamedProperty(napi_env, napi_value, const char*);
 static napi_value getNamedProperty(napi_env, napi_value, const char*);
 
 static enum imageType image_type = PNG_TYPE;
-static void my_png_write_data(png_structp png_ptr,png_bytep data,png_size_t length){
-struct mem_encode* p=(struct mem_encode*) png_get_io_ptr(png_ptr);
 
-if(!p->buf){
-p->buf=(char*)malloc(sizeof(p->buf)*mn);
-if(!p->buf){png_error(png_ptr,"malloc png error");}
-p->mem=mn;
+static void my_png_write_data(png_structp png_ptr,png_bytep data,png_size_t length){
+carrier*c=(carrier*)png_get_io_ptr(png_ptr);
+if(!c->_output){
+c->_output=(char*)malloc(sizeof(c->_output)*mn);
+if(!c->_output){png_error(png_ptr,"malloc png error");printf("malloc c->_output\n");}
+c->mem=mn;
 }
-	if(p->size +length > p->mem){
-	char *new_png=(char*)realloc(p->buf,sizeof(char)*p->size + length);
-	if(!new_png) png_error(png_ptr,"realloc png error");
-	p->buf=new_png;
-	p->mem+=length;
-	}
-	memcpy(p->buf + p->size,data,length);
-	p->size+=length;
-	}
+if(c->_out_bufsize +length > c->mem){
+char *new_png=(char*)realloc(c->_output,sizeof(char)*c->_out_bufsize + length);
+if(!new_png){ png_error(png_ptr,"realloc png error");printf("realloc png error\n");}
+c->_output=new_png;
+c->mem+=length;
+}
+memcpy(c->_output + c->_out_bufsize,data,length);
+c->_out_bufsize+=length;
+}
 
 static int color_set(unsigned char color[4], const char *value)
 {
+	//static unsigned char fg_color[4] = {0, 0, 0, 255};
+//static unsigned char bg_color[4] = {255, 255, 255, 255};
+//color[4]={0,0,0,255};
 	int len = strlen(value);
 	int i, count;
 	unsigned int col[4];
@@ -107,7 +117,10 @@ static int color_set(unsigned char color[4], const char *value)
 		for(i = 0; i < 3; i++) {
 			color[i] = col[i];
 		}
+		printf("*** COLOR[0][1][2]: %02x %02x %02x ***\n",color[0],color[1],color[2]);
+		
 		color[3] = 255;
+		printf("*** color[0][1][2][3]: %d% d% d %d***\n",color[0],color[1],color[2],color[3]);
 	} else if(len == 8) {
 		count = sscanf(value, "%02x%02x%02x%02x%n", &col[0], &col[1], &col[2], &col[3], &len);
 		if(count < 4 || len != 8) {
@@ -133,7 +146,7 @@ static void fillRow(unsigned char *row, int num, const unsigned char color[])
 	}
 }
 #endif
-struct mem_encode  writePNG(const QRcode *qrcode, const char *outfile, enum imageType type)
+struct mem_encode  writePNG(const QRcode *qrcode, const char *outfile, enum imageType type,carrier*c)
 {
 #if HAVE_PNG
 	struct mem_encode state;
@@ -150,6 +163,8 @@ struct mem_encode  writePNG(const QRcode *qrcode, const char *outfile, enum imag
 	unsigned char *row, *p, *q;
 	int x, y, xx, yy, bit;
 	int realwidth;
+	int margin=c->margin;
+	int size=c->size;
 
 	realwidth = (qrcode->width + margin * 2) * size;
 	if(type == PNG_TYPE) {
@@ -201,20 +216,20 @@ struct mem_encode  writePNG(const QRcode *qrcode, const char *outfile, enum imag
 			fprintf(stderr, "Failed to allocate memory.\n");
 			exit(EXIT_FAILURE);
 		}
-		palette[0].red   = fg_color[0];
-		palette[0].green = fg_color[1];
-		palette[0].blue  = fg_color[2];
-		palette[1].red   = bg_color[0];
-		palette[1].green = bg_color[1];
-		palette[1].blue  = bg_color[2];
-		alpha_values[0] = fg_color[3];
-		alpha_values[1] = bg_color[3];
+		palette[0].red   = c->fg_color[0];
+		palette[0].green = c->fg_color[1];
+		palette[0].blue  = c->fg_color[2];
+		palette[1].red   = c->bg_color[0];
+		palette[1].green = c->bg_color[1];
+		palette[1].blue  =c-> bg_color[2];
+		alpha_values[0] = c->fg_color[3];
+		alpha_values[1] = c->bg_color[3];
 		png_set_PLTE(png_ptr, info_ptr, palette, 2);
 		png_set_tRNS(png_ptr, info_ptr, alpha_values, 2, NULL);
 	}
 
 	//png_init_io(png_ptr, fp);
-	png_set_write_fn(png_ptr,&state, my_png_write_data, NULL);
+	png_set_write_fn(png_ptr,/*&state*/c, my_png_write_data, NULL);
 	if(type == PNG_TYPE) {
 		png_set_IHDR(png_ptr, info_ptr,
 				(unsigned int)realwidth, (unsigned int)realwidth,
@@ -274,7 +289,7 @@ struct mem_encode  writePNG(const QRcode *qrcode, const char *outfile, enum imag
 		}
 	} else {
 	/* top margin */
-		fillRow(row, realwidth, bg_color);
+		fillRow(row, realwidth, c->bg_color);
 		for(y = 0; y < margin * size; y++) {
 			png_write_row(png_ptr, row);
 		}
@@ -282,11 +297,11 @@ struct mem_encode  writePNG(const QRcode *qrcode, const char *outfile, enum imag
 		/* data */
 		p = qrcode->data;
 		for(y = 0; y < qrcode->width; y++) {
-			fillRow(row, realwidth, bg_color);
+			fillRow(row, realwidth, c->bg_color);
 			for(x = 0; x < qrcode->width; x++) {
 				for(xx = 0; xx < size; xx++) {
 					if(*p & 1) {
-						memcpy(&row[((margin + x) * size + xx) * 4], fg_color, 4);
+						memcpy(&row[((margin + x) * size + xx) * 4], c->fg_color, 4);
 					}
 				}
 				p++;
@@ -296,7 +311,7 @@ struct mem_encode  writePNG(const QRcode *qrcode, const char *outfile, enum imag
 			}
 		}
 		/* bottom margin */
-		fillRow(row, realwidth, bg_color);
+		fillRow(row, realwidth, c->bg_color);
 		for(y = 0; y < margin * size; y++) {
 			png_write_row(png_ptr, row);
 		}
@@ -314,30 +329,30 @@ return state;
 	return 0;
 #endif
 }
-static QRcode *encode(const unsigned char *intext, int length)
+static QRcode *encode(const unsigned char *intext, int length,carrier*c)
 {
 QRcode *code;
-if(micro) {
+if(c->micro) {
 if(eightbit) {
 // version 3 or 4
 //code=QRcode_encodeDataMQR(4,(unsigned char*)"mama\0",4,QR_ECLEVEL_M);
-code = QRcode_encodeDataMQR(length, intext, version, /*QR_ECLEVEL_M*/level);
+code = QRcode_encodeDataMQR(length, intext, c->version, /*QR_ECLEVEL_M*/c->level);
 } else {
-code = QRcode_encodeStringMQR((char *)intext, version, level, hint, casesensitive);
+code = QRcode_encodeStringMQR((char *)intext, c->version, c->level, hint, casesensitive);
 		}
 	} else if(eightbit) {
-		code = QRcode_encodeData(length, intext, version, level);
+		code = QRcode_encodeData(length, intext, c->version, c->level);
 	} else {
-		code = QRcode_encodeString((char *)intext, version, level, hint, casesensitive);
+		code = QRcode_encodeString((char *)intext, c->version, c->level, hint, casesensitive);
 	}
 
 	return code;
 }
-static struct mem_encode qrencoded(const unsigned char *intext, int length, const char *outfile)
+static struct mem_encode qrencoded(const unsigned char *intext, int length, const char *outfile,carrier*c)
 
 {
 	QRcode *qrcode;
-	qrcode = encode(intext, length);
+	qrcode = encode(intext, length,c);
 	if(qrcode == NULL) {
 		if(errno == ERANGE) {
 			fprintf(stderr, "Failed to encode the input data: Input data too large\n");
@@ -352,7 +367,7 @@ static struct mem_encode qrencoded(const unsigned char *intext, int length, cons
 	switch(image_type) {
 		case PNG_TYPE:
 		case PNG32_TYPE:
-			p=writePNG(qrcode, outfile, image_type);
+			p=writePNG(qrcode, outfile, image_type,c);
 			break;
 		default:
 			fprintf(stderr, "Unknown image type.\n");
@@ -368,16 +383,18 @@ void Execute(napi_env env,void* data){
 if(data==NULL)return;
  carrier* c=(carrier*)data;
 if(c==NULL){fprintf(stderr,"NULL! in malloc\n");return;}
-struct mem_encode p=qrencoded(c->_input,c->_bufferlength,"-");
-c->_output=(char*)malloc(sizeof(c->_output)*p.size);
-if(c->_output==NULL){fprintf(stderr,"some malloc error\n");return;}
-memcpy(c->_output,p.buf,p.size);
-c->_out_bufsize=p.size;
+struct mem_encode p=qrencoded(c->_input,c->_bufferlength,"-", c);
+//c->_output=(char*)malloc(sizeof(c->_output)*p.size);
+//if(c->_output==NULL){fprintf(stderr,"some malloc error\n");return;}
+//memcpy(c->_output,p.buf,p.size);
+//c->_out_bufsize=p.size;
+printf("p->size: %d\n",p.size);
 labuda=1;
+
 if(labuda==1){
-free(p.buf);
-p.buf=NULL;
-p.size=0;
+//free(p.buf);
+//p.buf=NULL;
+//p.size=0;
 labuda=0;
 }}
 
@@ -420,12 +437,14 @@ status=napi_create_buffer_copy(env,c->_out_bufsize,c->_output,NULL,&argv[1]);
 	//?	
 	}
 	free(c->_output);
+	c->_output=NULL;
+	c->mem=0;c->_out_bufsize=0;
 	free(c);
 }
 
 napi_value qrencode(napi_env env,napi_callback_info info){
 size_t argc=3;
-if(margin <= 0){if(micro){margin=2;}else{margin=4;}}
+//if(margin <= 0){if(micro){margin=2;}else{margin=4;}}
 	napi_status status;
 	napi_value argv[3];
 	//napi_value arg
@@ -444,7 +463,208 @@ if(margin <= 0){if(micro){margin=2;}else{margin=4;}}
 		//napi_throw_type_error(env,NULL,"Get global failed.");return NULL;
 		goto brr;
 	}
+	//unsigned char fg_color[4] = {0, 0, 0, 255};
 	c->_output=NULL;
+	c->_out_bufsize=0;
+	c->mem=0;
+	c->version=0;
+	c->micro=0;
+	c->margin=-1;
+	c->size=3;
+	c->level = QR_ECLEVEL_L;
+	//QRecLevel level = QR_ECLEVEL_L;
+	
+	//object for options, second argument
+	napi_valuetype vtype;
+	status=napi_typeof(env,argv[1],&vtype);
+	if(status !=napi_ok){napi_throw_type_error(env,NULL,"typeof failed.");return NULL;}
+	if(vtype != napi_object){
+	napi_throw_type_error(env,NULL,"Wrong type of arguments! Expects an object as second argument.");
+	return NULL;
+	}else{
+	printf("IS NAPI OBJECT FOR OPTIONS! OK!\n");
+	napi_value obj=argv[1];
+	uint32_t lind;
+	napi_value props_names;
+	status=napi_get_property_names(env,obj,&props_names);
+	if(status !=napi_ok){
+	napi_throw_type_error(env,NULL,"get_named_property failed.");return NULL;}
+	lind=objectLength(env,props_names);
+	if(lind==0){
+	napi_throw_type_error(env,NULL,"A provided object must not to be empty!");
+	return NULL;}
+	
+	
+	
+	//margin
+	const char*margi="margin";
+	bool has_p;
+	has_p=hasNamedProperty(env,obj,margi);
+	if(has_p){
+	napi_value vresi;
+	vresi=getNamedProperty(env,obj,margi);
+	int32_t dummyTwo=getZifra(env,vresi," for margin.");
+	if(dummyTwo < 0){napi_throw_type_error(env,NULL,"Invalid margin!");return NULL;}
+	printf("*** MARGIN: %d ***\n",dummyTwo);
+	c->margin=dummyTwo;
+	}else{
+	printf("*** IN OBJECT NO MARGIN FOUND! ***\n");
+	if(c->margin < 0){
+	if(c->micro){c->margin=2;}else{c->margin=4;}
+	}}
+	
+	//dot_size , default 3 
+	
+	bool has_dot_size;
+	const char*dotsizi="dot_size";
+	has_dot_size=hasNamedProperty(env,obj,dotsizi);
+	if(has_dot_size){
+	napi_value nres;
+	nres=getNamedProperty(env, obj, dotsizi);
+	int32_t dotSize=getZifra(env, nres, " for dot_size.");
+	if(dotSize <=0){
+	napi_throw_type_error(env,NULL,"Invalid dot_size.");
+	return NULL;
+	}
+	c->size=dotSize;
+	printf("*** DOT_SIZE: %d ***\n",dotSize);
+	}
+	
+	//micro
+	
+		
+	bool has_micro;
+	const char*micri="micro";
+	has_micro=hasNamedProperty(env,obj,micri);
+	if(has_micro){
+	napi_value nres2;
+	nres2=getNamedProperty(env, obj, micri);
+	int32_t micron=getZifra(env, nres2, " for micro.");
+	printf("*** MICRO: %d ***\n", micron);
+	if(micron == 1){
+	c->micro=micron;
+	}else{
+	c->micro=0;
+	}
+
+	}
+	
+	
+	//version
+	
+	
+	
+	
+	bool has_version;
+	const char*versi="version";
+	has_version=hasNamedProperty(env,obj,versi);
+	if(has_version){
+	napi_value nres3;
+	nres3=getNamedProperty(env, obj, versi);
+	int32_t verson=getZifra(env, nres3, " for version.");
+		if(verson < 0){
+		status=napi_throw_type_error(env,NULL,"Invalid version.");
+			return NULL;
+		}
+	if(c->micro && verson > MQRSPEC_VERSION_MAX){
+		//fprintf(stderr,"why %d\n",MQRSPEC_VERSION_MAX);
+	status=napi_throw_type_error(env,NULL,"Version should be less or equal to 4");// MQRSPEC_VERSION_MAX;
+	
+	return NULL;
+	}else if(!c->micro && verson > QRSPEC_VERSION_MAX){
+	status=napi_throw_type_error(env,NULL,"Version should be less or equal to 4");
+	return NULL;	
+	}
+	c->version=verson;
+	printf("*** VERSION: %d ***\n",verson);
+	if(c->micro){
+	if(c->version==0 || c->version==1 || c->version==2){
+	napi_throw_type_error(env,NULL,"Version must be specified to encode a Micro QR Code symbol.");
+	return NULL;
+	}
+	}
+	}
+	
+	
+	
+	
+	
+	
+	
+	//level
+	
+	
+	bool has_level;
+	const char*leveli="level";
+	has_level=hasNamedProperty(env,obj,leveli);
+	if(has_level){
+	napi_value nres4;
+	nres4=getNamedProperty(env, obj, leveli);
+	const char*lev;
+	lev=getString(env,nres4);
+	printf("*** LEVEL: %s ***\n",lev);
+	if(strcmp(lev,"h")==0  || strcmp(lev,"H")==0){
+	c->level=QR_ECLEVEL_H;
+	}else if(strcmp(lev,"m")==0  || strcmp(lev,"M")==0){
+	c->level=QR_ECLEVEL_M;
+	}else if(strcmp(lev,"l")==0 || strcmp(lev,"L")==0){
+	c->level=QR_ECLEVEL_L;
+	}else if(strcmp(lev,"q")==0 || strcmp(lev,"Q")==0){
+	c->level=QR_ECLEVEL_Q;
+	}else{
+	napi_throw_type_error(env,NULL,"Invalid level.");
+	return NULL;
+	}
+	}
+	
+	bool has_b;const char*coli_b="white";
+	const char*backi="background_color";
+	has_b=hasNamedProperty(env,obj,backi);
+	if(has_b){
+	napi_value nres5;
+	nres5=getNamedProperty(env, obj, backi);
+	coli_b=getString(env,nres5);
+	printf("BACKGROUND_COLOR: %s\n",coli_b);
+	if(color_set(c->bg_color,coli_b)){
+	napi_throw_type_error(env,NULL,"Invalid background color value.");
+	return NULL;
+	}
+	}
+	
+	// colors f
+	
+	bool has_f;
+	const char*fori="foreground_color";
+	const char*coli_f="Black";
+	has_f=hasNamedProperty(env,obj,fori);
+	if(has_f){
+	napi_value nres6;
+	nres6=getNamedProperty(env, obj, fori);
+	coli_f=getString(env,nres6);
+	printf("FOREGROUND_COLOR: %s\n",coli_f);
+	if(color_set(c->fg_color,coli_f))
+	{
+	napi_throw_type_error(env,NULL,"Invalid foreground color value.");
+	return NULL;
+	}
+	}
+	
+	
+	
+	
+	
+	}//end options
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	bool isbuf;
 	//napi_valuetype isbuf;
 	status=napi_is_buffer(env,argv[0],&isbuf);
@@ -511,6 +731,8 @@ status=napi_get_buffer_info(env, argv[0],(void**)(&c->_input),&c->_bufferlength)
 	}
 
 napi_value setOptions(napi_env env,napi_callback_info info){
+	return NULL;
+	/*
 size_t argc=1;
 	napi_value args[1];
 	napi_status status;
@@ -554,6 +776,8 @@ size_t argc=1;
 	if(micro){margin=2;}else{margin=4;}
 	}
 	}
+	
+	
 	bool has_dot_size;
 	const char*dotsizi="dot_size";
 	has_dot_size=hasNamedProperty(env,obj,dotsizi);
@@ -567,6 +791,10 @@ size_t argc=1;
 	}
 	size=dotSize;
 	}
+	
+	
+	
+	
 	bool has_micro;
 	const char*micri="micro";
 	has_micro=hasNamedProperty(env,obj,micri);
@@ -577,6 +805,10 @@ size_t argc=1;
 	if(micron == 1){micro=micron;}else{micro=0;}
 
 	}
+	
+	
+	
+	
 	//version
 	bool has_version;
 	const char*versi="version";
@@ -592,8 +824,7 @@ size_t argc=1;
 	if(micro && verson > MQRSPEC_VERSION_MAX){
 		//fprintf(stderr,"why %d\n",MQRSPEC_VERSION_MAX);
 	status=napi_throw_type_error(env,NULL,"Version should be less or equal to 4");// MQRSPEC_VERSION_MAX;
-		//status=
-			//napi_fatal_error("KUKU",NAPI_AUTO_LENGTH,"DUDU",NAPI_AUTO_LENGTH);
+	
 	return NULL;
 	}else if(!micro && verson > QRSPEC_VERSION_MAX){
 	status=napi_throw_type_error(env,NULL,"Version should be less or equal to 4");
@@ -607,6 +838,13 @@ size_t argc=1;
 	}
 	}
 	}
+	
+	
+	
+	
+	
+	
+	
 	//level
 	bool has_level;
 	const char*leveli="level";
@@ -656,7 +894,7 @@ size_t argc=1;
 	if(color_set(fg_color,coli_f)){
 	napi_throw_type_error(env,NULL,"Invalid foreground color value.");
 	return NULL;
-		}
+	}
 	}
 	
 	napi_value qr_version,qr_margin,qr_level, qr_size,qr_versi,qr_micro,qr_background_color,qr_foreground_color,qr_full_version;
@@ -687,7 +925,8 @@ const char*props[]={"full_version","copyright","margin","level","dot_size","micr
 	status=napi_create_object(env,&object);
 	if(status !=napi_ok){return NULL;}
 	
-napi_value jsvalues[]={qr_full_version,qr_version,qr_margin,qr_level,qr_size,qr_micro,qr_versi,qr_background_color,qr_foreground_color,NULL};
+napi_value jsvalues[]={qr_full_version,qr_version,qr_margin,
+* qr_level,qr_size,qr_micro,qr_versi,qr_background_color,qr_foreground_color,NULL};
 	
 	size_t mf=0;
 	while(props[mf]){
@@ -696,16 +935,31 @@ napi_value jsvalues[]={qr_full_version,qr_version,qr_margin,qr_level,qr_size,qr_
 	mf++;
 	}
 	return object;
+	*/
 }
 
 napi_value Init(napi_env env,napi_value exports){
 	napi_status status;
+	napi_value fn1;// fn;
+	/*
 napi_property_descriptor properties[]={
 	{"qrencode",0,qrencode,0,0,0,napi_default,0},
 	{"setOptions",0,setOptions,0,0,0,napi_default,0}
-};
-status=napi_define_properties(env,exports, sizeof(properties)/sizeof(*properties),properties);
-if(status !=napi_ok){napi_throw_type_error(env,NULL,"define_properties failed.");return NULL;}
+};*/
+//status=napi_define_properties(env,exports, sizeof(properties)/sizeof(*properties),properties);
+//if(status !=napi_ok){napi_throw_type_error(env,NULL,"define_properties failed.");return NULL;}
+/*
+status=napi_create_function(env,NULL,0,setOptions,NULL,&fn);
+if(status !=napi_ok){printf("create function setOtions failed\n");return NULL;}
+status=napi_set_named_property(env,exports,"setOptions",fn);
+if(status !=napi_ok){printf("set named property failed for setOptions\n"); return NULL;}
+*/ 
+
+status=napi_create_function(env,NULL,0,qrencode,NULL,&fn1);
+if(status !=napi_ok){printf("create function qrencode failed\n");return NULL;}
+status=napi_set_named_property(env,exports,"qrencode",fn1);
+if(status !=napi_ok){printf("set named property failed for qrencode\n"); return NULL;}
+
 return exports;
 }
 NAPI_MODULE(addon,Init)
