@@ -24,35 +24,11 @@ npm install qrencode_mini
 
 # Usage
 
-There are only two methods. 
+There is only one method. 
 
 ```
-const {setOptions, qrencode} = require('qrencode_mini');
+const {qrencode} = require('qrencode_mini');
 
-// only for the use at very beginning of a file:
-const b = setOptions({margin:4}); // synchronous, optional(can be skiped),
-//for the options settings which are also optional
-console.log("B: ",b); 
-// outputs an object with version, copyright and setted options or error info.
-
-// later somewhere in a router after http request:
-let str="bitcoin:1BMXmqU3fZ8PVjPbxgeenEX93YYf74bjeB?amount50&label=John&message=Donation%20for%20project";
-let buf=Buffer.from(str);
-
-// a promise:
-
-qrencode(buf).then(function(data){
-console.log('data: ','data:image/png;base64,'+data.toString('base64'));
-}).catch(function(err){console.log('err promise: ',err);
-})
-
-```
-
-## setOptions({options})
-
-1. It is synchronous, must be at runtime called when server first time started.
-
-```
 const options = {
 background_color:'#76eec6', // hex string, optional, default: black
 foreground_color:'#ff0000', // hex string, optional, default: white
@@ -68,19 +44,15 @@ version:4    // number, optional, default: 0
 // can be 0, 1, 2, 3, 4 //for microQR(if micro=1) must be equal to 3 or 4!!!!
 }
 
-let out = setOptions(options);
-console.log(out);
+let str="bitcoin:1BMXmqU3fZ8PVjPbxgeenEX93YYf74bjeB?amount50&label=John&message=Donation%20for%20project";
+let buf=Buffer.from(str);
 
-// Must be something like that:
-{ full_version: '4.0.0',
-  copyright: 'Copyright (C) 2006-2017 Kentaro Fukuchi.',
-  margin: 4,
-  level: 0,
-  dot_size: 3,
-  micro: 0,
-  version: 0, 
-  background_color: 'white',
-  foreground_color: 'Black' }
+// a promise:
+
+qrencode(buf, options).then(function(data){
+console.log('data: ','data:image/png;base64,'+data.toString('base64'));
+}).catch(function(err){console.log('err promise: ',err);
+})
 ```
 The version for microQR if micro = 1, must be specified to 3 or 4!
 

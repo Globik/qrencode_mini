@@ -1,5 +1,5 @@
-const ad=require('./build/Release/qrencode_mini');
-//const ad=require('./index.js');
+//const ad=require('./build/Release/qrencode_mini');
+const ad=require('./index.js');
 const {makeMeasurable}=require('performance-meter');
 const ob3={background_color:'76eec6',foreground_color:'ff0000', level:"q",dot_size:6,margin:2,micro:0,version:4}
 //const ob3={foreground_color:'ff0000',level:'q',dot_size:6,margin:2,micro:0,version:4}
@@ -18,7 +18,7 @@ const buf=Buffer.from(str2);
 console.log("input buf length: ",buf.length);
 //         argv[0] argv[1]  argv[2]
 for(var i=0;i<1;i++){
-ad.qrencode(buf,ob3,function(err,val){console.log('error: ',err);console.log('valA: ',val.toString());});
+//ad.qrencode(buf,ob3,function(err,val){console.log('error: ',err);console.log('valA: ',val.toString());});
 
-//ad.qrencode(buf,ob3).then(function(val){console.log('valA: ',val.toString());}).catch(function(err){console.log('error: ',err);})
+ad.qrencode(buf,ob3).then(function(val){console.log('valA: ',val.toString());}).catch(function(err){console.log('error: ',err);})
 }
